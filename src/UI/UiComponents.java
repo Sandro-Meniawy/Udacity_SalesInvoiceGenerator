@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.Vector;
 
 public class UiComponents extends JFrame implements ActionListener {
     private JPanel leftSidePanel;
@@ -168,7 +169,7 @@ public class UiComponents extends JFrame implements ActionListener {
 
 
     public void showInvoicesTableRowDetails(){
-       var invoiceData =  invoicesTableModel.getDataVector().get(invoicesTable.getSelectedRow());
+        Vector invoiceData = invoicesTableModel.getDataVector().get(invoicesTable.getSelectedRow());
        invoiceNumValue.setText(invoiceData.get(0).toString());
        invoiceDateInput.setText(invoiceData.get(1).toString());
        customerNameInput.setText(invoiceData.get(2).toString());
@@ -179,7 +180,7 @@ public class UiComponents extends JFrame implements ActionListener {
         try {
             invoicesData = businessLogicController.initiallyLoadTableDataFromFile("InvoicesTable");
             invoicesTableModel.getDataVector().removeAllElements();
-            for (var row : invoicesData) {
+            for (   String[] row : invoicesData) {
                 invoicesTableModel.addRow(row);
             }
         }catch (IOException ex) {
@@ -191,7 +192,7 @@ public class UiComponents extends JFrame implements ActionListener {
         try {
             invoicesData = businessLogicController.initiallyLoadTableDataFromFile("InvoiceItemsTable");
             invoiceItemsTableModel.getDataVector().removeAllElements();
-            for (var row : invoicesData) {
+            for (String[] row : invoicesData) {
                 invoiceItemsTableModel.addRow(row);
             }
         }catch (IOException ex) {
@@ -217,7 +218,7 @@ public class UiComponents extends JFrame implements ActionListener {
                     try {
                         invoicesData = businessLogicController.loadInvoicesFromFile(filePath);
                         invoicesTableModel.getDataVector().removeAllElements();
-                        for(var row : invoicesData) {
+                        for(String[] row : invoicesData) {
                             invoicesTableModel.addRow(row);
                         }
                     } catch (IOException ex) {
