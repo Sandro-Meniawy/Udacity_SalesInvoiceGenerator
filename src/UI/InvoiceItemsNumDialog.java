@@ -22,10 +22,9 @@ public class InvoiceItemsNumDialog extends JFrame {
         numberOfInvoiceItemsLabel = new JLabel("Number Of Invoice Items:");
         okBtn = new JButton("Ok");
         exitBtn = new JButton("Exit");
-        NumberFormatter numberFormatter = new NumberFormatter(NumberFormat.getIntegerInstance());
-        //numberFormatter.setAllowsInvalid(false);
-        numberFormatter.setMinimum(1);
-        numberOfInvoiceItemsInput = new JFormattedTextField(numberFormatter);
+        NumberFormatter numberOfItemsFormatter = new NumberFormatter(NumberFormat.getIntegerInstance());
+        numberOfItemsFormatter.setMinimum(1);
+        numberOfInvoiceItemsInput = new JFormattedTextField(numberOfItemsFormatter);
         numberOfInvoiceItemsInput.setColumns(10);
 
         add(numberOfInvoiceItemsLabel);
