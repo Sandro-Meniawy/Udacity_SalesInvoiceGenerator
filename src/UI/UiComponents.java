@@ -8,10 +8,7 @@ import model.InvoiceLine;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Vector;
@@ -50,6 +47,10 @@ public class UiComponents extends JFrame implements ActionListener {
     private JMenuBar fileHandlingMenuBar;
     private JMenuItem saveFileMenuItem;
     private JMenuItem loadFileMenuItem;
+    private JMenuItem loadInvoiceHeaderMenuItem;
+    private JMenuItem loadInvoiceLineMenuItem;
+    private JMenuItem saveInvoiceHeaderMenuItem;
+    private JMenuItem saveInvoiceLineMenuItem;
     private JOptionPane errorMsgs;
     private String[] invoicesTableColumns = {"No.","Date","Customer","Total"};
     private String[] invoiceItemsTableColumns = {"No.","Item Name","Item Price","Count","Item Total"};
@@ -91,9 +92,17 @@ public class UiComponents extends JFrame implements ActionListener {
         invoiceTotalValue = new JLabel("0.00");
         invoiceDateInput.setSize(20,7);
         fileHandlingMenuBar = new JMenuBar();
-        loadFileMenuItem = new JMenuItem("Load File");
-        saveFileMenuItem = new JMenuItem("Save File");
+        loadFileMenuItem = new JMenu("Load File");
+        loadInvoiceHeaderMenuItem = new JMenuItem("Load Invoice Header");
+        loadInvoiceLineMenuItem = new JMenuItem("Load Invoice Line");
+        saveFileMenuItem = new JMenu("Save File");
+        saveInvoiceHeaderMenuItem = new JMenuItem("Save Invoice Header");
+        saveInvoiceLineMenuItem = new JMenuItem("Save Invoice Line");
         fileHandlingMenu = new JMenu("File");
+        loadFileMenuItem.add(loadInvoiceHeaderMenuItem);
+        loadFileMenuItem.add(loadInvoiceLineMenuItem);
+        saveFileMenuItem.add(saveInvoiceHeaderMenuItem);
+        saveFileMenuItem.add(saveInvoiceLineMenuItem);
         fileHandlingMenu.add(loadFileMenuItem);
         fileHandlingMenu.add(saveFileMenuItem);
         fileHandlingMenuBar.add(fileHandlingMenu);
@@ -118,8 +127,10 @@ public class UiComponents extends JFrame implements ActionListener {
         invoiceItemsTableModel.addColumn(invoiceItemsTableColumns[4]);
         errorMsgs = new JOptionPane();
 
-        loadFileMenuItem.setActionCommand("LF");
-        saveFileMenuItem.setActionCommand("SF");
+        loadInvoiceHeaderMenuItem.setActionCommand("LIH");
+        loadInvoiceLineMenuItem.setActionCommand("LIL");
+        saveInvoiceHeaderMenuItem.setActionCommand("SIH");
+        saveInvoiceLineMenuItem.setActionCommand("SIL");
         saveChangesBtn.setActionCommand("SC");
         cancelChangesBtn.setActionCommand("CC");
         createNewInvoiceBtn.setActionCommand("CNI");
@@ -128,9 +139,10 @@ public class UiComponents extends JFrame implements ActionListener {
         invoiceItemsNumDialog.exitBtn.setActionCommand("Exit");
 
 
-
-        loadFileMenuItem.addActionListener(this);
-        saveFileMenuItem.addActionListener(this);
+        loadInvoiceHeaderMenuItem.addActionListener(this);
+        loadInvoiceLineMenuItem.addActionListener(this);
+        saveInvoiceHeaderMenuItem.addActionListener(this);
+        saveInvoiceLineMenuItem.addActionListener(this);
         saveChangesBtn.addActionListener(this);
         cancelChangesBtn.addActionListener(this);
         createNewInvoiceBtn.addActionListener(this);
@@ -143,6 +155,14 @@ public class UiComponents extends JFrame implements ActionListener {
                 showInvoicesTableRowDetails();
             }
         });
+
+        invoicesTable.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                showInvoicesTableRowDetails();
+            }
+        });
+
 
 
 
@@ -181,11 +201,27 @@ public class UiComponents extends JFrame implements ActionListener {
 
 
     public void showInvoicesTableRowDetails(){
-        Vector invoiceData = invoicesTableModel.getDataVector().get(invoicesTable.getSelectedRow());
-       invoiceNumValue.setText(invoiceData.get(0).toString());
-       invoiceDateInput.setText(invoiceData.get(1).toString());
-       customerNameInput.setText(invoiceData.get(2).toString());
-       invoiceTotalValue.setText(invoiceData.get(3).toString());
+if(invoicesTable.getSelectedRow() != -1) {
+    invoiceNumValue.setText("");
+    invoiceDateInput.setText("");
+    customerNameInput.setText("");
+    invoiceTotalValue.setText("");
+    Vector invoiceData = invoicesTableModel.getDataVector().get(invoicesTable.getSelectedRow());
+    if (invoiceData.get(0) != null) {
+        invoiceNumValue.setText(invoiceData.get(0).toString());
+    }
+    if (invoiceData.get(1) != null) {
+        invoiceDateInput.setText(invoiceData.get(1).toString());
+    }
+
+    if (invoiceData.get(2) != null) {
+        customerNameInput.setText(invoiceData.get(2).toString());
+    }
+
+    if (invoiceData.get(3) != null) {
+        invoiceTotalValue.setText(invoiceData.get(3).toString());
+    }
+}
     }
 
     public void initiallyLoadInvoicesData() {
@@ -255,19 +291,19 @@ public class UiComponents extends JFrame implements ActionListener {
         }
     }
 
-    public void loadFileFromMachine(){
+    public void loadFileFromMachine(String fileCode){
         JFileChooser fileSelector = new JFileChooser();
         if(fileSelector.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             filePath=fileSelector.getSelectedFile().getPath();
             try {
-            if(filePath.contains("InvoiceHeader")){
+            if(fileCode == "IH"){
                 invoiceHeader.setFilePath(filePath);
                 invoicesData = invoiceHeader.returnInvoiceHeaderData(invoiceHeader.getFilePath());
                 invoicesTableModel.getDataVector().removeAllElements();
                 for(String[] row : invoicesData) {
                     invoicesTableModel.addRow(row);
                 }
-            }else if(filePath.contains("InvoiceLine")){
+            }else if(fileCode == "IL"){
                     invoiceLine.setFilePath(filePath);
                     invoicesData = invoiceLine.returnInvoiceLineData(invoiceLine.getFilePath());
                     invoiceItemsTableModel.getDataVector().removeAllElements();
@@ -300,7 +336,7 @@ public class UiComponents extends JFrame implements ActionListener {
     }
     }
 
-    public void saveFileToMachine(){
+    public void saveFileToMachine(String fileCode){
         JFileChooser fileSelector = new JFileChooser();
         if(fileSelector.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             filePath=fileSelector.getSelectedFile().getPath();
@@ -309,8 +345,11 @@ public class UiComponents extends JFrame implements ActionListener {
             String invoiceLinePath = filePath.replace(fileName,"\\InvoiceLine_"+fileName);
 
             try {
-                invoiceHeader.exportInvoiceHeaderFile(invoiceHeaderPath,invoicesTableModel);
-                invoiceLine.exportInvoiceLineFile(invoiceLinePath,invoiceItemsTableModel);
+                if(fileCode == "IH"){
+                    invoiceHeader.exportInvoiceHeaderFile(invoiceHeaderPath,invoicesTableModel);
+                }else if(fileCode == "IL"){
+                    invoiceLine.exportInvoiceLineFile(invoiceLinePath,invoiceItemsTableModel);
+                }
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
             }
@@ -320,12 +359,20 @@ public class UiComponents extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         switch(e.getActionCommand()){
-            case "LF":
-                loadFileFromMachine();
+            case "LIH":
+                loadFileFromMachine("IH");
                 break;
 
-            case "SF":
-                saveFileToMachine();
+            case "LIL":
+                loadFileFromMachine("IL");
+                break;
+
+            case "SIH":
+                saveFileToMachine("IH");
+                break;
+
+            case "SIL":
+                saveFileToMachine("IL");
                 break;
 
             case "SC":
