@@ -6,7 +6,11 @@ import model.InvoiceHeader;
 import model.InvoiceLine;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
@@ -39,10 +43,12 @@ public class UiComponents extends JFrame implements ActionListener {
     private JLabel invoiceTotalValue;
     private DefaultTableModel invoicesTableModel;
     private DefaultTableModel invoiceItemsTableModel;
+    private String totalItemPrice;
     private JButton createNewInvoiceBtn;
     private JButton deleteInvoiceBtn;
     private JButton saveChangesBtn;
     private JButton cancelChangesBtn;
+    private TableRowSorter<TableModel> invoiceItemsSort;
     private JMenu fileHandlingMenu;
     private JMenuBar fileHandlingMenuBar;
     private JMenuItem saveFileMenuItem;
@@ -125,6 +131,10 @@ public class UiComponents extends JFrame implements ActionListener {
         invoiceItemsTableModel.addColumn(invoiceItemsTableColumns[2]);
         invoiceItemsTableModel.addColumn(invoiceItemsTableColumns[3]);
         invoiceItemsTableModel.addColumn(invoiceItemsTableColumns[4]);
+        invoiceItemsSort = new TableRowSorter<>(invoiceItemsTableModel);
+
+        invoiceItemsTable.setRowSorter(invoiceItemsSort);
+
         errorMsgs = new JOptionPane();
 
         loadInvoiceHeaderMenuItem.setActionCommand("LIH");
@@ -164,8 +174,6 @@ public class UiComponents extends JFrame implements ActionListener {
         });
 
 
-
-
         add(leftSidePanel);
         add(rightSidePanel);
         invoicesTableLabelPanel.add(invoicesTableLabel);
@@ -194,8 +202,9 @@ public class UiComponents extends JFrame implements ActionListener {
         rightSideBottomPanel.add(cancelChangesBtn);
         rightSidePanel.add(rightSideBottomPanel);
 
-        initiallyLoadInvoicesData();
         initiallyLoadInvoiceItemsData();
+        initiallyLoadInvoicesData();
+
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
@@ -209,6 +218,7 @@ if(invoicesTable.getSelectedRow() != -1) {
     Vector invoiceData = invoicesTableModel.getDataVector().get(invoicesTable.getSelectedRow());
     if (invoiceData.get(0) != null) {
         invoiceNumValue.setText(invoiceData.get(0).toString());
+        invoiceHeader.setInvoiceNumber(invoiceData.get(0).toString());
     }
     if (invoiceData.get(1) != null) {
         invoiceDateInput.setText(invoiceData.get(1).toString());
@@ -221,6 +231,9 @@ if(invoicesTable.getSelectedRow() != -1) {
     if (invoiceData.get(3) != null) {
         invoiceTotalValue.setText(invoiceData.get(3).toString());
     }
+
+    invoiceItemsSort.setRowFilter(RowFilter.regexFilter("(?i)" + invoiceNumValue.getText(),0));
+
 }
     }
 
@@ -229,8 +242,16 @@ if(invoicesTable.getSelectedRow() != -1) {
             invoiceHeader.setFilePath(Paths.get("").toAbsolutePath().toString()+"\\InvoicesFiles\\InvoiceHeader.csv");
             invoicesData = invoiceHeader.returnInvoiceHeaderData(invoiceHeader.getFilePath());
             invoicesTableModel.getDataVector().removeAllElements();
+
+
             for (   String[] row : invoicesData) {
-                invoicesTableModel.addRow(row);
+                invoiceHeader.setTotalInvoicePrice(0);
+                for(int rowCount=0;rowCount < invoiceItemsTableModel.getRowCount();rowCount++) {
+                    if (row[0].equals(invoiceItemsTableModel.getValueAt(rowCount,0))){
+                        invoiceHeader.calculateTotalInvoicePrice(invoiceItemsTableModel.getValueAt(rowCount,4).toString());
+                    }
+                }
+                invoicesTableModel.addRow(invoiceHeader.reformatInvoicesRows(row));
             }
         }catch (IOException ex) {
             JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
@@ -243,8 +264,8 @@ if(invoicesTable.getSelectedRow() != -1) {
             invoicesData = invoiceLine.returnInvoiceLineData(invoiceLine.getFilePath());
             invoiceItemsTableModel.getDataVector().removeAllElements();
             for (String[] row : invoicesData) {
-                invoiceItemsTableModel.addRow(row);
-            }
+                    invoiceItemsTableModel.addRow(invoiceLine.calculateTotalItemPrice(row));
+                }
         }catch (IOException ex) {
             JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
         }
@@ -252,8 +273,13 @@ if(invoicesTable.getSelectedRow() != -1) {
 
     public void saveInvoiceChanges() {
         try {
+            for (int rowCount = 0 ;rowCount < invoiceItemsTableModel.getRowCount();rowCount++){
+                invoiceItemsTableModel.setValueAt(Integer.parseInt(invoiceItemsTableModel.getValueAt(rowCount,2).toString())*Integer.parseInt(invoiceItemsTableModel.getValueAt(rowCount,3).toString()),rowCount,4);
+            }
+
             invoiceHeader.saveInvoiceHeaderChanges(invoiceHeader.getFilePath(),invoicesTableModel);
             invoiceLine.saveInvoiceLineChanges(invoiceLine.getFilePath(),invoiceItemsTableModel);
+            invoiceItemsNumDialog.setInvoiceNumber("Reset");
         }catch (IOException ex) {
             JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
         }
@@ -261,7 +287,8 @@ if(invoicesTable.getSelectedRow() != -1) {
 
     public void fireInvoiceItemsNumDialog(){
         invoiceItemsNumDialog.setInvoiceItemsNumber(0);
-        invoiceItemsNumDialog.clearInvoiceItemsField();
+        invoiceItemsNumDialog.setInvoiceNumber("Reset");
+        invoiceItemsNumDialog.clearInvoiceItemsFields();
         invoiceItemsNumDialog.setVisible(true);
 
     }
@@ -269,10 +296,13 @@ if(invoicesTable.getSelectedRow() != -1) {
     public void createNewInvoice(boolean clickedBtnFlag){
         if(clickedBtnFlag){
             invoiceItemsNumDialog.performOkBtnActions();
-            invoicesTableModel.addRow(new String[]{"", "", "", ""});
+            invoicesTableModel.addRow(new String[]{invoiceItemsNumDialog.getInvoiceNumber(), "", "", ""});
             for(int rowCount = 0 ;rowCount < invoiceItemsNumDialog.getInvoiceItemsNumber();rowCount++){
-                invoiceItemsTableModel.addRow(new String[]{"","","","",""});
+                invoiceItemsTableModel.addRow(new String[]{invoiceItemsNumDialog.getInvoiceNumber()+"","","","",""});
             }
+            invoicesTable.clearSelection();
+            invoiceNumValue.setText(invoiceItemsNumDialog.getInvoiceNumber());
+            invoiceItemsSort.setRowFilter(RowFilter.regexFilter("(?i)" + invoiceNumValue.getText(),0));
         }else{
             invoiceItemsNumDialog.performExitBtnActions();
         }
@@ -283,7 +313,13 @@ if(invoicesTable.getSelectedRow() != -1) {
             invoiceHeader.setInvoiceNumber(invoicesTable.getValueAt(invoicesTable.getSelectedRow(),0).toString());
             invoicesTableModel.removeRow(invoicesTable.getSelectedRow());
             invoiceLine.setInvoiceNumber(invoiceHeader.getInvoiceNumber());
-            for(int invoiceItemsTableRowIndex=invoiceItemsTable.getRowCount()-1;invoiceItemsTableRowIndex >= 0;invoiceItemsTableRowIndex--){
+            invoiceItemsTable.clearSelection();
+            invoiceNumValue.setText("");
+            invoiceDateInput.setText("");
+            customerNameInput.setText("");
+            invoiceTotalValue.setText("");
+            invoiceItemsSort.setRowFilter(null);
+            for(int invoiceItemsTableRowIndex=invoiceItemsTableModel.getRowCount()-1;invoiceItemsTableRowIndex >= 0;invoiceItemsTableRowIndex--){
                 if(invoiceLine.getInvoiceNumber().equals(invoiceItemsTable.getValueAt(invoiceItemsTableRowIndex,0).toString())){
                     invoiceItemsTableModel.removeRow(invoiceItemsTableRowIndex);
                 }
@@ -301,14 +337,20 @@ if(invoicesTable.getSelectedRow() != -1) {
                 invoicesData = invoiceHeader.returnInvoiceHeaderData(invoiceHeader.getFilePath());
                 invoicesTableModel.getDataVector().removeAllElements();
                 for(String[] row : invoicesData) {
-                    invoicesTableModel.addRow(row);
+                    invoiceHeader.setTotalInvoicePrice(0);
+                    for(int rowCount=0;rowCount < invoiceItemsTableModel.getRowCount();rowCount++) {
+                        if (row[0].equals(invoiceItemsTableModel.getValueAt(rowCount,0))){
+                            invoiceHeader.calculateTotalInvoicePrice(invoiceItemsTableModel.getValueAt(rowCount,4).toString());
+                        }
+                    }
+                    invoicesTableModel.addRow(invoiceHeader.reformatInvoicesRows(row));
                 }
             }else if(fileCode == "IL"){
                     invoiceLine.setFilePath(filePath);
                     invoicesData = invoiceLine.returnInvoiceLineData(invoiceLine.getFilePath());
                     invoiceItemsTableModel.getDataVector().removeAllElements();
                     for(String[] row : invoicesData) {
-                        invoiceItemsTableModel.addRow(row);
+                        invoiceItemsTableModel.addRow(invoiceLine.calculateTotalItemPrice(row));
                     }
             }
 
@@ -320,6 +362,13 @@ if(invoicesTable.getSelectedRow() != -1) {
 
     public void cancelInvoiceChanges(){
         try{
+            invoicesTable.clearSelection();
+            invoiceItemsTable.clearSelection();
+            invoiceNumValue.setText("");
+            invoiceDateInput.setText("");
+            customerNameInput.setText("");
+            invoiceTotalValue.setText("");
+            invoiceItemsSort.setRowFilter(null);
             invoicesData = invoiceHeader.returnInvoiceHeaderData(invoiceHeader.getFilePath());
             invoicesTableModel.getDataVector().removeAllElements();
             for (   String[] row : invoicesData) {
@@ -329,7 +378,7 @@ if(invoicesTable.getSelectedRow() != -1) {
             invoicesData = invoiceLine.returnInvoiceLineData(invoiceLine.getFilePath());
             invoiceItemsTableModel.getDataVector().removeAllElements();
             for (String[] row : invoicesData) {
-                invoiceItemsTableModel.addRow(row);
+                invoiceItemsTableModel.addRow(invoiceLine.calculateTotalItemPrice(row));
             }
     }catch (IOException ex) {
         JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
@@ -348,6 +397,9 @@ if(invoicesTable.getSelectedRow() != -1) {
                 if(fileCode == "IH"){
                     invoiceHeader.exportInvoiceHeaderFile(invoiceHeaderPath,invoicesTableModel);
                 }else if(fileCode == "IL"){
+                    for (int rowCount = 0 ;rowCount < invoiceItemsTableModel.getRowCount();rowCount++){
+                        invoiceItemsTableModel.setValueAt(Integer.parseInt(invoiceItemsTableModel.getValueAt(rowCount,2).toString())*Integer.parseInt(invoiceItemsTableModel.getValueAt(rowCount,3).toString()),rowCount,4);
+                    }
                     invoiceLine.exportInvoiceLineFile(invoiceLinePath,invoiceItemsTableModel);
                 }
             } catch (IOException ex) {

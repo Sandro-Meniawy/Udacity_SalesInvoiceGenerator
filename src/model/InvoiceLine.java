@@ -8,6 +8,7 @@ import java.io.IOException;
 public class InvoiceLine {
     private String invoiceNumber;
     private String filePath;
+    private String totalItemPrice;
     private BusinessLogicController businessLogicController = new BusinessLogicController();
 
     public String getFilePath() {
@@ -36,5 +37,21 @@ public class InvoiceLine {
 
     public void exportInvoiceLineFile(String filePath, DefaultTableModel invoiceLineTableData) throws IOException {
         businessLogicController.saveInvoicesToFile(filePath,invoiceLineTableData);
+    }
+
+    public String[] calculateTotalItemPrice(String[] invoiceItemRow){
+            totalItemPrice = String.valueOf(Integer.parseInt(invoiceItemRow[2])*Integer.parseInt(invoiceItemRow[3]));
+            String[] calculatedInvoiceItemRow = {};
+            if(invoiceItemRow.length == 4){
+                calculatedInvoiceItemRow = new String[invoiceItemRow.length+1];
+                for(int rowItemCounter=0;rowItemCounter<invoiceItemRow.length;rowItemCounter++){
+                    calculatedInvoiceItemRow[rowItemCounter] = invoiceItemRow[rowItemCounter];
+                }
+                calculatedInvoiceItemRow[4] = totalItemPrice;
+            }else if(invoiceItemRow.length == 5){
+                calculatedInvoiceItemRow = invoiceItemRow;
+                calculatedInvoiceItemRow[4] = totalItemPrice;
+            }
+        return calculatedInvoiceItemRow;
     }
 }

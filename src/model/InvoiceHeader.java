@@ -8,6 +8,9 @@ import java.io.IOException;
 public class InvoiceHeader {
     private String invoiceNumber;
     private String filePath;
+
+
+    private int totalInvoicePrice = 0;
     private BusinessLogicController businessLogicController = new BusinessLogicController();
 
     public String getFilePath() {
@@ -36,4 +39,31 @@ public class InvoiceHeader {
     public void exportInvoiceHeaderFile(String filePath, DefaultTableModel invoiceHeaderTableData) throws IOException {
         businessLogicController.saveInvoicesToFile(filePath,invoiceHeaderTableData);
     }
+
+    public void calculateTotalInvoicePrice(String invoiceItemPrice){
+        totalInvoicePrice = totalInvoicePrice + Integer.parseInt(invoiceItemPrice);
+    }
+
+    public String[] reformatInvoicesRows(String[] invoiceRow){
+             String[] reformatedInvoiceRow = {};
+        if(invoiceRow.length == 3){
+            reformatedInvoiceRow = new String[invoiceRow.length+1];
+            for(int rowItemCounter=0;rowItemCounter<invoiceRow.length;rowItemCounter++){
+                reformatedInvoiceRow[rowItemCounter] = invoiceRow[rowItemCounter];
+            }
+            reformatedInvoiceRow[3] = String.valueOf(totalInvoicePrice);
+        }else if(invoiceRow.length == 4){
+            reformatedInvoiceRow = invoiceRow;
+            reformatedInvoiceRow[3] = String.valueOf(totalInvoicePrice);
+        }
+        return reformatedInvoiceRow;
+    }
+    public int getTotalInvoicePrice() {
+        return totalInvoicePrice;
+    }
+
+    public void setTotalInvoicePrice(int totalInvoicePrice) {
+        this.totalInvoicePrice = totalInvoicePrice;
+    }
+
 }
