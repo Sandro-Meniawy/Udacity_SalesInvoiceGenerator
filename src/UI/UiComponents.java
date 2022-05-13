@@ -292,6 +292,7 @@ if(invoicesTable.getSelectedRow() != -1) {
             invoiceHeader.saveInvoiceHeaderChanges(invoiceHeader.getFilePath(),invoicesTableModel);
             invoiceLine.saveInvoiceLineChanges(invoiceLine.getFilePath(),invoiceItemsTableModel);
             invoiceItemsNumDialog.setInvoiceNumber("Reset");
+            showMessage("Changes Saved","Your changes saved into latest loaded files below:\nInvoices ("+invoiceHeader.getFilePath()+")\nInvoice Items ("+invoiceLine.getFilePath()+")");
         }catch (IOException ex) {
             JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
         }
@@ -384,7 +385,7 @@ if(invoicesTable.getSelectedRow() != -1) {
 
                 }
             }
-
+showMessage("File Loaded","Your file "+filePath+" has been loaded successfully");
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
             }
@@ -418,11 +419,17 @@ if(invoicesTable.getSelectedRow() != -1) {
                 }
                 invoicesTableModel.addRow(invoiceHeader.reformatInvoicesRows(row));
             }
+            showMessage("Changes Cancelled","Please note that your changes have been discarded and the old data has been loaded in tables");
     }catch (IOException ex) {
         JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
     }
     }
 
+    public void showMessage(String msgTitle,String msgBody){
+
+        JOptionPane.showMessageDialog(new JFrame(), msgBody, msgTitle,
+                JOptionPane.PLAIN_MESSAGE);
+    }
     public void saveFileToMachine(String fileCode){
         JFileChooser fileSelector = new JFileChooser();
         if(fileSelector.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -449,9 +456,12 @@ if(invoicesTable.getSelectedRow() != -1) {
                 }
                 if(fileCode == "IH"){
                     invoiceHeader.exportInvoiceHeaderFile(invoiceHeaderPath,invoicesTableModel);
+                    showMessage("File Saved","Your data has been exported to "+invoiceHeaderPath+".csv successfully");
                 }else if(fileCode == "IL"){
                     invoiceLine.exportInvoiceLineFile(invoiceLinePath,invoiceItemsTableModel);
+                    showMessage("File Saved","Your data has been exported to "+invoiceLinePath+".csv successfully");
                 }
+
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
             }
