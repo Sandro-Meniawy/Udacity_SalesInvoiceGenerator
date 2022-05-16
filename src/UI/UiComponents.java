@@ -1,7 +1,7 @@
 package UI;
 
 import BusinessLogic.BusinessLogicController;
-import com.sun.jdi.event.StepEvent;
+//import com.sun.jdi.event.StepEvent;
 import model.InvoiceHeader;
 import model.InvoiceLine;
 
@@ -215,7 +215,7 @@ if(invoicesTable.getSelectedRow() != -1) {
     invoiceDateInput.setText("");
     customerNameInput.setText("");
     invoiceTotalValue.setText("");
-    Vector invoiceData = invoicesTableModel.getDataVector().get(invoicesTable.getSelectedRow());
+    Vector invoiceData = (Vector) invoicesTableModel.getDataVector().get(invoicesTable.getSelectedRow());
     if (invoiceData.get(0) != null) {
         invoiceNumValue.setText(invoiceData.get(0).toString());
         invoiceHeader.setInvoiceNumber(invoiceData.get(0).toString());
