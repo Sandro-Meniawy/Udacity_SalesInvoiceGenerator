@@ -8,7 +8,8 @@ import java.io.IOException;
 public class InvoiceHeader {
     private String invoiceNumber;
     private String filePath;
-
+    private InvoiceLine[] invoiceItems;
+    private int invoiceItemsCounter;
 
     private int totalInvoicePrice = 0;
     private BusinessLogicController businessLogicController = new BusinessLogicController();
@@ -66,4 +67,16 @@ public class InvoiceHeader {
         this.totalInvoicePrice = totalInvoicePrice;
     }
 
+    public InvoiceLine[] getInvoiceItems() {
+        return invoiceItems;
+    }
+
+    public void setInvoiceItems(String[][] invoiceItemsRows) {
+        invoiceItems = new InvoiceLine[invoiceItemsRows.length];
+        invoiceItemsCounter = 0;
+        for (String[] row : invoiceItemsRows) {
+            invoiceItems[invoiceItemsCounter] = new InvoiceLine(row[0],row[1],row[2],row[3]);
+            invoiceItemsCounter++;
+        }
+    }
 }

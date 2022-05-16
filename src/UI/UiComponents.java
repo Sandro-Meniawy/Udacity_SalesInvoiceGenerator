@@ -263,9 +263,11 @@ if(invoicesTable.getSelectedRow() != -1) {
             invoiceLine.setFilePath(Paths.get("").toAbsolutePath().toString()+"\\InvoicesFiles\\InvoiceLine.csv");
             invoicesData = invoiceLine.returnInvoiceLineData(invoiceLine.getFilePath());
             invoiceItemsTableModel.getDataVector().removeAllElements();
-            for (String[] row : invoicesData) {
-                    invoiceItemsTableModel.addRow(invoiceLine.calculateTotalItemPrice(row));
-                }
+            invoiceHeader.setInvoiceItems(invoicesData);
+            for (InvoiceLine row : invoiceHeader.getInvoiceItems()) {
+                invoiceItemsTableModel.addRow(new String[]{row.getInvoiceNumber(),row.getItemName(),row.getItemPrice(),row.getItemCount(),row.getTotalItemPrice()});
+            }
+
         }catch (IOException ex) {
             JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
         }
@@ -292,6 +294,25 @@ if(invoicesTable.getSelectedRow() != -1) {
             invoiceHeader.saveInvoiceHeaderChanges(invoiceHeader.getFilePath(),invoicesTableModel);
             invoiceLine.saveInvoiceLineChanges(invoiceLine.getFilePath(),invoiceItemsTableModel);
             invoiceItemsNumDialog.setInvoiceNumber("Reset");
+
+            invoicesData = invoiceLine.returnInvoiceLineData(invoiceLine.getFilePath());
+            invoiceItemsTableModel.getDataVector().removeAllElements();
+            invoiceHeader.setInvoiceItems(invoicesData);
+            for (InvoiceLine row : invoiceHeader.getInvoiceItems()) {
+                invoiceItemsTableModel.addRow(new String[]{row.getInvoiceNumber(),row.getItemName(),row.getItemPrice(),row.getItemCount(),row.getTotalItemPrice()});
+            }
+            invoicesData = invoiceHeader.returnInvoiceHeaderData(invoiceHeader.getFilePath());
+            invoicesTableModel.getDataVector().removeAllElements();
+            for (   String[] row : invoicesData) {
+                invoiceHeader.setTotalInvoicePrice(0);
+                for(int rowCount=0;rowCount < invoiceItemsTableModel.getRowCount();rowCount++) {
+                    if (row[0].equals(invoiceItemsTableModel.getValueAt(rowCount,0))){
+                        invoiceHeader.calculateTotalInvoicePrice(invoiceItemsTableModel.getValueAt(rowCount,4).toString());
+                    }
+                }
+                invoicesTableModel.addRow(invoiceHeader.reformatInvoicesRows(row));
+            }
+
             showMessage("Changes Saved","Your changes saved into latest loaded files below:\nInvoices ("+invoiceHeader.getFilePath()+")\nInvoice Items ("+invoiceLine.getFilePath()+")");
         }catch (IOException ex) {
             JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.PLAIN_MESSAGE);
@@ -369,9 +390,10 @@ if(invoicesTable.getSelectedRow() != -1) {
                     invoiceLine.setFilePath(filePath);
                     invoicesData = invoiceLine.returnInvoiceLineData(invoiceLine.getFilePath());
                     invoiceItemsTableModel.getDataVector().removeAllElements();
-                    for(String[] row : invoicesData) {
-                        invoiceItemsTableModel.addRow(invoiceLine.calculateTotalItemPrice(row));
-                    }
+                invoiceHeader.setInvoiceItems(invoicesData);
+                for (InvoiceLine row : invoiceHeader.getInvoiceItems()) {
+                    invoiceItemsTableModel.addRow(new String[]{row.getInvoiceNumber(),row.getItemName(),row.getItemPrice(),row.getItemCount(),row.getTotalItemPrice()});
+                }
 
                 for (int invoicesRowCount = 0 ;invoicesRowCount < invoicesTableModel.getRowCount();invoicesRowCount++){
                     invoiceHeader.setTotalInvoicePrice(0);
@@ -404,10 +426,10 @@ showMessage("File Loaded","Your file "+filePath+" has been loaded successfully")
 
             invoicesData = invoiceLine.returnInvoiceLineData(invoiceLine.getFilePath());
             invoiceItemsTableModel.getDataVector().removeAllElements();
-            for (String[] row : invoicesData) {
-                invoiceItemsTableModel.addRow(invoiceLine.calculateTotalItemPrice(row));
+            invoiceHeader.setInvoiceItems(invoicesData);
+            for (InvoiceLine row : invoiceHeader.getInvoiceItems()) {
+                invoiceItemsTableModel.addRow(new String[]{row.getInvoiceNumber(),row.getItemName(),row.getItemPrice(),row.getItemCount(),row.getTotalItemPrice()});
             }
-
             invoicesData = invoiceHeader.returnInvoiceHeaderData(invoiceHeader.getFilePath());
             invoicesTableModel.getDataVector().removeAllElements();
             for (   String[] row : invoicesData) {
@@ -436,7 +458,7 @@ showMessage("File Loaded","Your file "+filePath+" has been loaded successfully")
             filePath=fileSelector.getSelectedFile().getPath();
             String fileName = filePath.substring(filePath.lastIndexOf("\\")+1);
             String invoiceHeaderPath = filePath.replace(fileName,"InvoiceHeader_"+fileName);
-            String invoiceLinePath = filePath.replace(fileName,"\\InvoiceLine_"+fileName);
+            String invoiceLinePath = filePath.replace(fileName,"InvoiceLine_"+fileName);
 
             try {
                 for (int rowCount = 0 ;rowCount < invoiceItemsTableModel.getRowCount();rowCount++){

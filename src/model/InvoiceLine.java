@@ -9,7 +9,19 @@ public class InvoiceLine {
     private String invoiceNumber;
     private String filePath;
     private String totalItemPrice;
+    private String itemName;
+    private String itemPrice;
+    private String itemCount;
     private BusinessLogicController businessLogicController = new BusinessLogicController();
+
+    public InvoiceLine(){}
+    public InvoiceLine(String invoiceNumber, String itemName, String itemPrice, String itemCount){
+        this.invoiceNumber = invoiceNumber;
+        this.itemName = itemName;
+        this.itemPrice = itemPrice;
+        this.itemCount = itemCount;
+        this.totalItemPrice = calculateTotalItemPrice(itemPrice,itemCount);
+    }
 
     public String getFilePath() {
         return filePath;
@@ -39,19 +51,36 @@ public class InvoiceLine {
         businessLogicController.saveInvoicesToFile(filePath,invoiceLineTableData);
     }
 
-    public String[] calculateTotalItemPrice(String[] invoiceItemRow){
-            totalItemPrice = String.valueOf(Integer.parseInt(invoiceItemRow[2])*Integer.parseInt(invoiceItemRow[3]));
-            String[] calculatedInvoiceItemRow = {};
-            if(invoiceItemRow.length == 4){
-                calculatedInvoiceItemRow = new String[invoiceItemRow.length+1];
-                for(int rowItemCounter=0;rowItemCounter<invoiceItemRow.length;rowItemCounter++){
-                    calculatedInvoiceItemRow[rowItemCounter] = invoiceItemRow[rowItemCounter];
-                }
-                calculatedInvoiceItemRow[4] = totalItemPrice;
-            }else if(invoiceItemRow.length == 5){
-                calculatedInvoiceItemRow = invoiceItemRow;
-                calculatedInvoiceItemRow[4] = totalItemPrice;
-            }
-        return calculatedInvoiceItemRow;
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
+    public String getItemPrice() {
+        return itemPrice;
+    }
+
+    public void setItemPrice(String itemPrice) {
+        this.itemPrice = itemPrice;
+    }
+
+    public String getItemCount() {
+        return itemCount;
+    }
+
+    public void setItemCount(String itemCount) {
+        this.itemCount = itemCount;
+    }
+
+    public String getTotalItemPrice() {
+        return totalItemPrice;
+    }
+
+    public String calculateTotalItemPrice(String rowItemPrice, String rowItemCount){
+        totalItemPrice = String.valueOf(Integer.parseInt(rowItemPrice)*Integer.parseInt(rowItemCount));
+        return totalItemPrice;
     }
 }
